@@ -1,4 +1,4 @@
-# ump-rex-rexfile-io
+# upm-rex-rexfile-io
 Unity Package for REXfile input and output
 
 ## Installation
