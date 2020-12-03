@@ -1,0 +1,7 @@
+{
+    "name": "com.roboticeyes.rexfile-io",
+    "displayName": "REXfile input and output",
+    "version": "1.0.17",
+    "unity": "2019.4",
+    "description": "Convert REX files into Unity GameObjects at runtime. Convert Meshes into REX files."
+    }
