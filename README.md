@@ -43,4 +43,4 @@ byte[] rexFile = RexConverter.Instance.GenerateRexFile (meshesToWrite);
 
 ### What is REX?
 - REX is an Augmented Reality platform. [Find out more about REX](https://github.com/roboticeyes/openrex)
-- REX data format is our own data format to store REX-relevant information efficiently. [Have a look at the specification](https://github.com/roboticeyes/openrex/blob/master/doc/rex-spec-v1.md)
+- REX data format is our open source file format to store REX-relevant information efficiently. [Have a look at the specification](https://github.com/roboticeyes/openrex/blob/master/doc/rex-spec-v1.md)
