@@ -20,13 +20,13 @@ RenderSettings:
   m_FogDensity: 0.01
   m_LinearFogStart: 0
   m_LinearFogEnd: 300
-  m_AmbientSkyColor: {r: 0.212, g: 0.227, b: 0.259, a: 1}
+  m_AmbientSkyColor: {r: 0.49590603, g: 0.5067046, b: 0.5283019, a: 1}
   m_AmbientEquatorColor: {r: 0.114, g: 0.125, b: 0.133, a: 1}
   m_AmbientGroundColor: {r: 0.047, g: 0.043, b: 0.035, a: 1}
   m_AmbientIntensity: 1
   m_AmbientMode: 3
   m_SubtractiveShadowColor: {r: 0.42, g: 0.478, b: 0.627, a: 1}
-  m_SkyboxMaterial: {fileID: 0}
+  m_SkyboxMaterial: {fileID: 10304, guid: 0000000000000000f000000000000000, type: 0}
   m_HaloStrength: 0.5
   m_FlareStrength: 1
   m_FlareFadeSpeed: 3
@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0, g: 0, b: 0, a: 1}
+  m_IndirectSpecularColor: {r: 0.4400849, g: 0.48859346, b: 0.5687825, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -132,6 +132,7 @@ GameObject:
   - component: {fileID: 519420032}
   - component: {fileID: 519420031}
   - component: {fileID: 519420029}
+  - component: {fileID: 519420030}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -147,6 +148,21 @@ AudioListener:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 519420028}
   m_Enabled: 1
+--- !u!114 &519420030
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 519420028}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c5717e119b4bff8408750aaea3ff68e0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  movementSpeed: 2
+  playerCamera: {fileID: 519420031}
+  lockYMovement: 1
 --- !u!20 &519420031
 Camera:
   m_ObjectHideFlags: 0
@@ -329,7 +345,7 @@ MonoBehaviour:
   textPrefab: {fileID: 1001209890610188, guid: 344c4b1fd424ec546a7ff72dac848f7a, type: 3}
   lineSetPrefab: {fileID: 1401629930222152, guid: 471655b1835786d48b7299af40be368f,
     type: 3}
-  pointSetPrefab: {fileID: 1961058510537850, guid: d7a04fdc3cf8bb242aea93719f40ee33,
+  pointSetPrefab: {fileID: 1961058510537850, guid: c0c63be978eb9b5499a7788902997162,
     type: 3}
   meshPrefab: {fileID: 5111654538906298697, guid: 27dbc1af47390284592a1764459dc396,
     type: 3}
@@ -363,5 +379,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d471f84ecdb31294280ef31b525cb283, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  rexFileName: oscar.rex
+  rexFileNames:
+  - D&S_Foyer_P3DMKII_local.rex
+  - Deepspacebim.rex
   meshesToWrite: []

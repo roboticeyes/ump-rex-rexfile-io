@@ -19,27 +19,35 @@ public class LoadRexFileExample : MonoBehaviour
     [Header ("File must be inside the `Assets/StreamingAssets`.")]
     [SerializeField]
     [Tooltip ("File must be inside the `StreamingAssets` Folder. Filename must include `.rex` ending.")]
-    private string rexFileName;
+    private List<string> rexFileNames;
 
     [SerializeField]
     private MeshFilter[] meshesToWrite;
 
     float startTime = 0f;
-    byte[] data;
+    List<byte[]> data;
 
     private LoadedObjects loaded;
+
+    private List<GameObject> parentObjects;
 
     bool load = true;
     int loadedTimes = 0;
 
-    private void Start()
+    private void Start ()
     {
         //Required for Materials that use _RexFadeAlpha as a global transparency value, e.g. SolidWithFadeTransparency.mat, otherwise they will be invisible.
         Shader.SetGlobalFloat ("_RexFadeAlpha", 1);
 
-        if (!string.IsNullOrEmpty (rexFileName))
+        data = new List<byte[]>();
+        parentObjects = new List<GameObject>();
+
+        foreach (var rexFileName in rexFileNames)
         {
-            data = File.ReadAllBytes (Application.streamingAssetsPath + "/" + rexFileName);
+            if (!string.IsNullOrEmpty (rexFileName))
+            {
+                data.Add(File.ReadAllBytes(Application.streamingAssetsPath + "/" + rexFileName));
+            }
         }
 
         if (meshesToWrite != null && meshesToWrite.Length > 0)
@@ -49,7 +57,7 @@ public class LoadRexFileExample : MonoBehaviour
         }
     }
 
-    private void Update()
+    private void Update ()
     {
         if (Input.GetKeyDown (KeyCode.Space))
         {
@@ -61,29 +69,50 @@ public class LoadRexFileExample : MonoBehaviour
             load = false;
             if (loaded != null)
             {
-                loaded.DestroyLoadedObjects();
+                loaded.DestroyLoadedObjects ();
                 loaded = null;
+                
+                foreach (var parentObject in parentObjects)
+                {
+                    Destroy(parentObject);
+                }
+                parentObjects.Clear();
             }
 
             startTime = Time.realtimeSinceStartup;
-            RexConverter.Instance.ConvertFromRex (data, (success, loadedObjects) =>
+            foreach (var item in data)
             {
-                if (!success)
+                RexConverter.Instance.ConvertFromRex (item, (success, loadedObjects) =>
                 {
-                    Debug.Log ("ConvertFromRex failed.");
-                    return;
-                }
+                    parentObjects.Add(new GameObject("RexContainer_" + parentObjects.Count));
+                    
+                    if (!success)
+                    {
+                        Debug.Log ("ConvertFromRex failed.");
+                        return;
+                    }
 
-                List<MeshFilter> meshFilters = new List<MeshFilter> ();
+                    loaded = loadedObjects;
+                    loadedTimes++;
 
-                foreach (var item in loadedObjects.Meshes)
-                {
-                    item.gameObject.SetActive (true);
+                    var parentObjectsIdx = parentObjects.Count-1;
+                    
+                    foreach (var meshObject in loadedObjects.Meshes)
+                    {
+                        meshObject.gameObject.SetActive (true);
+                        meshObject.gameObject.transform.SetParent(parentObjects[parentObjectsIdx].transform);
+                    }
 
-                    meshFilters.Add (item.GetComponentInChildren<MeshFilter>());
-                }
+                    foreach (var pointListObject in loadedObjects.PointSets)
+                    {
+                        pointListObject.gameObject.transform.SetParent(parentObjects[parentObjectsIdx].transform);
+                    }
 
-            });
+
+                    Debug.Log ("ConvertFromRex success after " + (Time.realtimeSinceStartup - startTime).ToString ("F4") + " s");
+                    load = true;
+                });
+            }
         }
     }
 }
