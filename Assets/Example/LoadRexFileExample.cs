@@ -15,104 +15,104 @@ using UnityEngine;
 
 public class LoadRexFileExample : MonoBehaviour
 {
-	[Space]
-	[Header ("File must be inside the `Assets/StreamingAssets`.")]
-	[SerializeField]
-	[Tooltip ("File must be inside the `StreamingAssets` Folder. Filename must include `.rex` ending.")]
-	private List<string> rexFileNames;
+    [Space]
+    [Header ("File must be inside the `Assets/StreamingAssets`.")]
+    [SerializeField]
+    [Tooltip ("File must be inside the `StreamingAssets` Folder. Filename must include `.rex` ending.")]
+    private List<string> rexFileNames;
 
-	[SerializeField] private MeshFilter[] meshesToWrite;
+    [SerializeField] private MeshFilter[] meshesToWrite;
 
-	float startTime = 0f;
-	List<byte[]> data;
+    float startTime = 0f;
+    List<byte[]> data;
 
-	private LoadedObjects loaded;
+    private LoadedObjects loaded;
 
-	private List<GameObject> parentObjects;
+    private List<GameObject> parentObjects;
 
-	bool load = true;
-	int loadedTimes = 0;
+    bool load = true;
+    int loadedTimes = 0;
 
-	private void Start()
-	{
-		//Required for Materials that use _RexFadeAlpha as a global transparency value, e.g. SolidWithFadeTransparency.mat, otherwise they will be invisible.
-		Shader.SetGlobalFloat ("_RexFadeAlpha", 1);
+    private void Start()
+    {
+        //Required for Materials that use _RexFadeAlpha as a global transparency value, e.g. SolidWithFadeTransparency.mat, otherwise they will be invisible.
+        Shader.SetGlobalFloat ("_RexFadeAlpha", 1);
 
-		data = new List<byte[]>();
-		parentObjects = new List<GameObject>();
+        data = new List<byte[]> ();
+        parentObjects = new List<GameObject> ();
 
-		foreach (var rexFileName in rexFileNames)
-		{
-			if (!string.IsNullOrEmpty (rexFileName))
-			{
-				data.Add (File.ReadAllBytes (Application.streamingAssetsPath + "/" + rexFileName));
-			}
-		}
+        foreach (var rexFileName in rexFileNames)
+        {
+            if (!string.IsNullOrEmpty (rexFileName))
+            {
+                data.Add (File.ReadAllBytes (Application.streamingAssetsPath + "/" + rexFileName));
+            }
+        }
 
-		if (meshesToWrite != null && meshesToWrite.Length > 0)
-		{
-			File.WriteAllBytes ("out.rex", RexConverter.Instance.GenerateRexFile (meshesToWrite));
-			Debug.Log ("Writing done.");
-		}
-	}
+        if (meshesToWrite != null && meshesToWrite.Length > 0)
+        {
+            File.WriteAllBytes ("out.rex", RexConverter.Instance.GenerateRexFile (meshesToWrite));
+            Debug.Log ("Writing done.");
+        }
+    }
 
-	private void Update()
-	{
-		if (Input.GetKeyDown (KeyCode.Space))
-		{
-			loadedTimes = 0;
-		}
+    private void Update()
+    {
+        if (Input.GetKeyDown (KeyCode.Space))
+        {
+            loadedTimes = 0;
+        }
 
-		if (data != null && load && loadedTimes < 1)
-		{
-			load = false;
-			if (loaded != null)
-			{
-				loaded.DestroyLoadedObjects();
-				loaded = null;
+        if (data != null && load && loadedTimes < 1)
+        {
+            load = false;
+            if (loaded != null)
+            {
+                loaded.DestroyLoadedObjects ();
+                loaded = null;
 
-				foreach (var parentObject in parentObjects)
-				{
-					Destroy (parentObject);
-				}
+                foreach (var parentObject in parentObjects)
+                {
+                    Destroy (parentObject);
+                }
 
-				parentObjects.Clear();
-			}
+                parentObjects.Clear ();
+            }
 
-			startTime = Time.realtimeSinceStartup;
-			foreach (var item in data)
-			{
-				RexConverter.Instance.ConvertFromRex (item, (success, loadedObjects) =>
-				{
-					if (!success)
-					{
-						Debug.Log ("ConvertFromRex failed.");
-						return;
-					}
+            startTime = Time.realtimeSinceStartup;
+            foreach (var item in data)
+            {
+                RexConverter.Instance.ConvertFromRex (item, (success, loadedObjects) =>
+                {
+                    if (!success)
+                    {
+                        Debug.Log ("ConvertFromRex failed.");
+                        return;
+                    }
 
-					parentObjects.Add (new GameObject ("RexContainer_" + parentObjects.Count));
+                    parentObjects.Add (new GameObject ("RexContainer_" + parentObjects.Count));
 
-					loaded = loadedObjects;
-					loadedTimes++;
+                    loaded = loadedObjects;
+                    loadedTimes++;
 
-					var parentObjectsIdx = parentObjects.Count - 1;
+                    var parentObjectsIdx = parentObjects.Count - 1;
 
-					foreach (var meshObject in loadedObjects.Meshes)
-					{
-						meshObject.gameObject.SetActive (true);
-						meshObject.gameObject.transform.SetParent (parentObjects[parentObjectsIdx].transform);
-					}
+                    foreach (var meshObject in loadedObjects.Meshes)
+                    {
+                        meshObject.gameObject.SetActive (true);
+                        meshObject.gameObject.transform.SetParent (parentObjects[parentObjectsIdx].transform);
+                    }
 
-					foreach (var pointListObject in loadedObjects.PointSets)
-					{
-						pointListObject.gameObject.transform.SetParent (parentObjects[parentObjectsIdx].transform);
-					}
+                    foreach (var pointListObject in loadedObjects.PointSets)
+                    {
+                        pointListObject.gameObject.transform.SetParent (parentObjects[parentObjectsIdx].transform);
+                    }
 
 
-					Debug.Log ("ConvertFromRex success after " + (Time.realtimeSinceStartup - startTime).ToString ("F4") + " s");
-					load = true;
-				});
-			}
-		}
-	}
+                    Debug.Log ("ConvertFromRex success after " + (Time.realtimeSinceStartup - startTime).ToString ("F4") + " s");
+                    load = true;
+                });
+            }
+        }
+    }
 }

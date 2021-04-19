@@ -8,10 +8,8 @@
  *
  */
 
-using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using UnityEngine;
 using Random = UnityEngine.Random;
@@ -115,10 +113,18 @@ namespace RoboticEyes.Rex.RexFileReader.Examples
 
 		public override void SetRendererEnabled (bool enabled)
 		{
+			foreach (var plpp in GetComponentsInChildren<PointListParticlesPrefab>(true))
+			{
+				plpp.SetRendererEnabled (enabled);
+			}
 		}
 
 		public override void SetLayer (int layer)
 		{
+			foreach (var plpp in GetComponentsInChildren<PointListParticlesPrefab>(true))
+			{
+				plpp.SetLayer (layer);
+			}
 		}
 	}
 }

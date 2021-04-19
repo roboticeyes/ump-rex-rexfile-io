@@ -10,51 +10,58 @@
 
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Rendering;
 
 namespace RoboticEyes.Rex.RexFileReader.Examples
 {
-	public class PointListParticlesPrefab : RexPointListObject
-	{
-		[SerializeField] private bool pauseAfterInstantiation = true;
-		[SerializeField] private float particleSize = 0.1f;
-		[SerializeField] private ParticleSystem particlesSystem;
-		private ParticleSystem.Particle[] particles;
+    public class PointListParticlesPrefab : RexPointListObject
+    {
+        [SerializeField] private bool pauseAfterInstantiation = true;
+        [SerializeField] private float particleSize = 0.1f;
+        [SerializeField] private ParticleSystem particlesSystem;
+        private ParticleSystem.Particle[] particles;
 
-		public override bool SetPoints (List<Vector3> pointPositions, List<Color> pointColors)
-		{
-			particles = new ParticleSystem.Particle[pointPositions.Count];
+        public override bool SetPoints (List<Vector3> pointPositions, List<Color> pointColors)
+        {
+            particles = new ParticleSystem.Particle[pointPositions.Count];
 
-			for (int i = 0; i < pointPositions.Count; i++)
-			{
-				var particle = new ParticleSystem.Particle
-				{
-					position = pointPositions[i],
-					remainingLifetime = 99999,
-					startColor = pointColors[i],
-					startSize = particleSize
-				};
-				particle.SetMeshIndex (0);
+            for (int i = 0; i < pointPositions.Count; i++)
+            {
+                var particle = new ParticleSystem.Particle
+                {
+                    position = pointPositions[i],
+                    remainingLifetime = 99999,
+                    startColor = pointColors[i],
+                    startSize = particleSize
+                };
+                particle.SetMeshIndex (0);
 
-				particles[i] = particle;
-			}
+                particles[i] = particle;
+            }
 
-			particlesSystem.SetParticles (particles);
+            particlesSystem.SetParticles (particles);
 
-			if (pauseAfterInstantiation)
-			{
-				particlesSystem.Pause ();
-			}
+            if (pauseAfterInstantiation)
+            {
+                particlesSystem.Pause ();
+            }
 
-			return true;
-		}
+            return true;
+        }
 
-		public override void SetRendererEnabled (bool enabled)
-		{
-		}
+        public override void SetRendererEnabled (bool enabled)
+        {
+            gameObject.SetActive (enabled);
 
-		public override void SetLayer (int layer)
-		{
-		}
-	}
+            if (enabled)
+            {
+                //necessary for particles to become visible
+                GetComponent<ParticleSystem> ().SetParticles (particles);
+            }
+        }
+
+        public override void SetLayer (int layer)
+        {
+            gameObject.layer = layer;
+        }
+    }
 }
