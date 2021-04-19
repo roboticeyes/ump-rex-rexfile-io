@@ -14,36 +14,47 @@ using UnityEngine.Rendering;
 
 namespace RoboticEyes.Rex.RexFileReader.Examples
 {
-    public class PointListParticlesPrefab : RexPointListObject
-    {
-        [SerializeField] private float particleSize = 0.1f;
-        [SerializeField]
-        private ParticleSystem particlesSystem;
-        private ParticleSystem.Particle[] particles;
+	public class PointListParticlesPrefab : RexPointListObject
+	{
+		[SerializeField] private bool pauseAfterInstantiation = true;
+		[SerializeField] private float particleSize = 0.1f;
+		[SerializeField] private ParticleSystem particlesSystem;
+		private ParticleSystem.Particle[] particles;
 
-        public override bool SetPoints (List<Vector3> pointPositions, List<Color> pointColors)
-        {
-            particles = new ParticleSystem.Particle[pointPositions.Count];
-            
-            for (int i = 0; i < pointPositions.Count; i++)
-            {
-                particles[i].position = pointPositions[i];
-                particles[i].SetMeshIndex(0);
-                particles[i].remainingLifetime = 99999;
-                particles[i].startColor = pointColors[i];
-                particles[i].startSize = particleSize;
-            }
-            particlesSystem.SetParticles(particles);
-            particlesSystem.Pause();
-            return true;
-        }
+		public override bool SetPoints (List<Vector3> pointPositions, List<Color> pointColors)
+		{
+			particles = new ParticleSystem.Particle[pointPositions.Count];
 
-        public override void SetRendererEnabled (bool enabled)
-        {
-        }
+			for (int i = 0; i < pointPositions.Count; i++)
+			{
+				var particle = new ParticleSystem.Particle
+				{
+					position = pointPositions[i],
+					remainingLifetime = 99999,
+					startColor = pointColors[i],
+					startSize = particleSize
+				};
+				particle.SetMeshIndex (0);
 
-        public override void SetLayer (int layer)
-        {
-        }
-    }
+				particles[i] = particle;
+			}
+
+			particlesSystem.SetParticles (particles);
+
+			if (pauseAfterInstantiation)
+			{
+				particlesSystem.Pause ();
+			}
+
+			return true;
+		}
+
+		public override void SetRendererEnabled (bool enabled)
+		{
+		}
+
+		public override void SetLayer (int layer)
+		{
+		}
+	}
 }

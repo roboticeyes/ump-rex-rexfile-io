@@ -9,127 +9,116 @@
  */
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using UnityEngine;
 using Random = UnityEngine.Random;
+using ColoredPoint = RoboticEyes.Rex.RexFileReader.Examples.ThreadedClustering.ColoredPoint;
 
 namespace RoboticEyes.Rex.RexFileReader.Examples
 {
-    public class PointListClusteredParticlesPrefab : RexPointListObject
-    {
-        [SerializeField] private int clusterCount = 64;
-        [SerializeField] private GameObject pointListParticlesPrefab;
+	public class PointListClusteredParticlesPrefab : RexPointListObject
+	{
+		[SerializeField] private int clusterCount = 16;
+		[SerializeField] private GameObject pointListParticlesPrefab;
 
-        public override bool SetPoints (List<Vector3> pointPositions, List<Color> pointColors)
-        {
-            var lasPoints = CombinePointInfo(pointPositions, pointColors);
-            var clusteredPointPositions = ClusterPoints(lasPoints, clusterCount);
+		public override bool SetPoints (List<Vector3> pointPositions, List<Color> pointColors)
+		{
+			var startingCentroids = GetRandomStartingCentroids (pointPositions, clusterCount);
+			var coloredPoints = CombinePointInfo (pointPositions, pointColors);
 
-            foreach (var clusteredPointPosition in clusteredPointPositions)
-            {
-                var child = Instantiate(pointListParticlesPrefab, transform);
+			StartClusteringCoroutine (coloredPoints, startingCentroids, (success, clusteredPointPositions) =>
+				{
+					if (!success) return;
+					StartCoroutine (ParticleSystemSpawnerCoroutine (clusteredPointPositions));
+				}
+			);
 
-                child.GetComponent<PointListParticlesPrefab>().SetPoints(
-                    clusteredPointPosition.Select(ls => ls.point).ToList(), 
-                    clusteredPointPosition.Select(ls => ls.color).ToList());
-            }
-            
-            return true;
-        }
+			return true;
+		}
 
-        private static List<LasPoint> CombinePointInfo(List<Vector3> pointPositions, List<Color> pointColors)
-        {
-            var lasPoints = pointColors.Select((color, i) => new LasPoint {point = pointPositions[i], color = color}).ToList();
-            return lasPoints;
-        }
+		private IEnumerator ParticleSystemSpawnerCoroutine (List<List<ColoredPoint>> clusteredPointPositions)
+		{
+			foreach (var clusteredPointPosition in clusteredPointPositions)
+			{
+				var child = Instantiate (pointListParticlesPrefab, transform).GetComponent<PointListParticlesPrefab> ();
 
-        private static List<List<LasPoint>> ClusterPoints(List<LasPoint> pointPositions, int kVal)
-        {
-            var clusteredPoints = InitializeClusterPointsList(kVal);
-            var centroids = GetRandomStartingCentroids(pointPositions, kVal);
+				child.SetPoints (
+					clusteredPointPosition.Select (ls => ls.point).ToList (),
+					clusteredPointPosition.Select (ls => ls.color).ToList ());
 
-            foreach (var pointPosition in pointPositions)
-            {
-                clusteredPoints[GetIndexOfClosestCentroid(pointPosition.point, centroids)].Add(pointPosition);
-            }
+				yield return null;
+			}
+		}
 
-            return clusteredPoints;
-        }
+		private void StartClusteringCoroutine (List<ColoredPoint> coloredPoints, List<Vector3> startingCentroids, ClusterResultDelegate resultDelegate)
+		{
+			StartCoroutine (ClusterPointsCoroutine (coloredPoints, startingCentroids, clusterCount, resultDelegate));
+		}
 
-        private static List<List<LasPoint>> InitializeClusterPointsList(int kVal)
-        {
-            var clusteredPoints = new List<List<LasPoint>>();
-            
-            for (int i = 0; i < kVal; i++)
-            {
-                clusteredPoints.Add(new List<LasPoint>());
-            }
+		private delegate void ClusterResultDelegate (bool success, List<List<ColoredPoint>> loadedObjects);
 
-            return clusteredPoints;
-        }
+		private IEnumerator ClusterPointsCoroutine (List<ColoredPoint> pointPositions, List<Vector3> startingCentroids, int kVal, ClusterResultDelegate result)
+		{
+			var threadedClustering = new ThreadedClustering (pointPositions, startingCentroids, kVal);
+			threadedClustering.StartJob ();
 
-        private static int GetIndexOfClosestCentroid(Vector3 pointPosition, List<Vector3> centroids)
-        {
-            var minDist = float.PositiveInfinity;
-            var minIdx = 0;
-            
-            for (int i = 0; i < centroids.Count; i++)
-            {
-                var dist = Vector3.Distance(pointPosition, centroids[i]);
+			var waiter = new WaitForSeconds (0.05f);
 
-                if (dist < minDist)
-                {
-                    minDist = dist;
-                    minIdx = i;
-                }
-            }
+			while (!threadedClustering.IsDone)
+			{
+				yield return waiter;
+			}
 
-            return minIdx;
-        }
+			result (threadedClustering.clusteredPoints != null, threadedClustering.clusteredPoints);
+		}
 
-        private static List<Vector3> GetRandomStartingCentroids(List<LasPoint> pointPositions, int kVal)
-        {
-            var min = new Vector3(
-                pointPositions.Min(v => v.point.x),
-                pointPositions.Min(v => v.point.y),
-                pointPositions.Min(v => v.point.z));
 
-            var max = new Vector3(
-                pointPositions.Max(v => v.point.x),
-                pointPositions.Max(v => v.point.y),
-                pointPositions.Max(v => v.point.z));
+		private static List<ColoredPoint> CombinePointInfo (List<Vector3> pointPositions, List<Color> pointColors)
+		{
+			var lasPoints = pointColors.Select ((color, i) => new ColoredPoint {point = pointPositions[i], color = color}).ToList ();
+			return lasPoints;
+		}
 
-            var centroids = new List<Vector3>();
-            
-            for (var i = 0; i < kVal; i++)
-            {
-                centroids.Add(GetRandomVectorWithinBounds(min, max));
-            }
-            
-            return centroids;
-        }
 
-        private static Vector3 GetRandomVectorWithinBounds(Vector3 min, Vector3 max)
-        {
-            return new Vector3(
-                    Random.Range(min.x, max.x),
-                    Random.Range(min.y, max.y),
-                    Random.Range(min.z, max.z));
-        }
+		private static List<Vector3> GetRandomStartingCentroids (List<Vector3> pointPositions, int kVal)
+		{
+			var min = new Vector3 (
+				pointPositions.Min (v => v.x),
+				pointPositions.Min (v => v.y),
+				pointPositions.Min (v => v.z));
 
-        public override void SetRendererEnabled (bool enabled)
-        {
-        }
+			var max = new Vector3 (
+				pointPositions.Max (v => v.x),
+				pointPositions.Max (v => v.y),
+				pointPositions.Max (v => v.z));
 
-        public override void SetLayer (int layer)
-        {
-        }
+			var centroids = new List<Vector3> ();
 
-        struct LasPoint
-        {
-            public Vector3 point;
-            public Color color;
-        }
-    }
+			for (var i = 0; i < kVal; i++)
+			{
+				centroids.Add (GetRandomVectorWithinBounds (min, max));
+			}
+
+			return centroids;
+		}
+
+		private static Vector3 GetRandomVectorWithinBounds (Vector3 min, Vector3 max)
+		{
+			return new Vector3 (
+				Random.Range (min.x, max.x),
+				Random.Range (min.y, max.y),
+				Random.Range (min.z, max.z));
+		}
+
+		public override void SetRendererEnabled (bool enabled)
+		{
+		}
+
+		public override void SetLayer (int layer)
+		{
+		}
+	}
 }

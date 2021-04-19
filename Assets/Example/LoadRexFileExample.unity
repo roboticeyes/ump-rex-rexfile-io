@@ -380,6 +380,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   rexFileNames:
-  - D&S_Foyer_P3DMKII_local.rex
+  - D&S_Foyer_P3DMKII_Modellkoordinatensystem.rex
   - Deepspacebim.rex
   meshesToWrite: []
