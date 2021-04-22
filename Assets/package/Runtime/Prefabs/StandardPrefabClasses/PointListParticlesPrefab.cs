@@ -9,43 +9,65 @@
  */
 
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using UnityEngine;
 
 namespace RoboticEyes.Rex.RexFileReader.Examples
 {
     public class PointListParticlesPrefab : RexPointListObject
     {
-        [SerializeField] private bool pauseAfterInstantiation = true;
-        [SerializeField] private float particleSize = 0.1f;
-        [SerializeField] private ParticleSystem particlesSystem;
+        [SerializeField] 
+        private bool pauseAfterInstantiation = true;
+        [SerializeField] 
+        private float particleSize = 0.1f;
+        [SerializeField] 
+        private ParticleSystem particlesSystem;
         private ParticleSystem.Particle[] particles;
+        private float currentDensityFactor = 0;
+        private Renderer objRenderer;
 
+        //only useful if this prefab is used without clustering prefab, which it shouldn't be
         public override bool SetPoints (List<Vector3> pointPositions, List<Color> pointColors)
         {
             particles = new ParticleSystem.Particle[pointPositions.Count];
+            var startSize = Vector3.one * particleSize;
 
             for (int i = 0; i < pointPositions.Count; i++)
             {
-                var particle = new ParticleSystem.Particle
-                {
-                    position = pointPositions[i],
-                    remainingLifetime = 99999,
-                    startColor = pointColors[i],
-                    startSize = particleSize
-                };
-                particle.SetMeshIndex (0);
-
-                particles[i] = particle;
+                particles[i].position = pointPositions[i];
+                particles[i].startColor = pointColors[i];
+                particles[i].startSize3D = startSize;
             }
 
             particlesSystem.SetParticles (particles);
+            
+            if (pauseAfterInstantiation)
+            {
+                particlesSystem.Pause ();
+            }
+            
+            return true;
+        }
+        
+        public void SetPoints (List<ThreadedClustering.ColoredPoint> coloredPoints)
+        {
+            particles = new ParticleSystem.Particle[coloredPoints.Count];
+            var startSize = Vector3.one * particleSize;
+
+            Parallel.For (0, coloredPoints.Count, i =>
+            {
+                var coloredPoint = coloredPoints[i];
+                particles[i].position = coloredPoint.point;
+                particles[i].startColor = coloredPoint.color;
+                particles[i].startSize3D = startSize;
+            });
 
             if (pauseAfterInstantiation)
             {
                 particlesSystem.Pause ();
             }
-
-            return true;
+            
+            objRenderer = GetComponent<Renderer> ();
         }
 
         public override void SetRendererEnabled (bool enabled)
@@ -55,13 +77,51 @@ namespace RoboticEyes.Rex.RexFileReader.Examples
             if (enabled)
             {
                 //necessary for particles to become visible
-                GetComponent<ParticleSystem> ().SetParticles (particles);
+                particlesSystem.SetParticles (particles);
             }
         }
 
         public override void SetLayer (int layer)
         {
             gameObject.layer = layer;
+        }
+
+        public int GetParticleCount()
+        {
+            return particles.Length;
+        }
+
+        public bool IsVisibleByCamera()
+        {
+            return objRenderer.isVisible;
+        }
+
+        public void SetDensity(float densityFactor)
+        {
+            //prevent irrelevant updates
+            if(Mathf.Abs(densityFactor - currentDensityFactor) < 0.05f) return;
+
+            //skip reduction if there isn't any
+            if (Mathf.Approximately(densityFactor, 1f))
+            {
+                particlesSystem.SetParticles (particles);
+            }
+            else
+            {
+                float reducedCount = Mathf.CeilToInt (particles.Length * densityFactor);
+                var particleSubset = new ParticleSystem.Particle[(int)reducedCount];
+                var dynamicParticleSize = Vector3.one * Mathf.Max((1 - densityFactor) * 0.1f, particleSize);
+                
+                Parallel.For (0, (int)reducedCount, i =>
+                {
+                    particleSubset[i] = particles[(int)(i / reducedCount * particles.Length)];
+                    particleSubset[i].startSize3D = dynamicParticleSize;
+                });
+                
+                particlesSystem.SetParticles (particleSubset);
+            }
+            
+            currentDensityFactor = densityFactor;
         }
     }
 }

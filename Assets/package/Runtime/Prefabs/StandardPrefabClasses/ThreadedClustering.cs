@@ -9,21 +9,23 @@
  */
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using UnityEngine;
 
 namespace RoboticEyes.Rex.RexFileReader.Examples
 {
     public class ThreadedClustering : ThreadedWorker
     {
-        readonly List<ColoredPoint> pointPositions;
-        readonly int kVal;
-        private readonly List<Vector3> centroids;
+        private readonly IEnumerable<ColoredPoint> pointPositions;
+        private readonly int kVal;
+        private readonly Vector3[] centroids;
+        
+        public List<ColoredPoint>[] clusteredPoints;
 
-        public List<List<ColoredPoint>> clusteredPoints;
-
-
-        public ThreadedClustering (List<ColoredPoint> pointPositions, List<Vector3> centroids, int kVal)
+        public ThreadedClustering (IEnumerable<ColoredPoint> pointPositions, Vector3[] centroids, int kVal)
         {
             this.pointPositions = pointPositions;
             this.kVal = kVal;
@@ -32,16 +34,18 @@ namespace RoboticEyes.Rex.RexFileReader.Examples
 
         public override void WorkerFunction()
         {
-            try
-            {
-                var tempClusteredPoints = InitializeClusterPointsList (kVal);
+            try {
+                clusteredPoints = new List<ColoredPoint>[kVal];
+                var concurrentClusteredPoints = InitializeConcurrentClusterPointsList (kVal);
 
-                foreach (var pointPosition in pointPositions)
+                Parallel.ForEach (pointPositions, pointPosition => {
+                    concurrentClusteredPoints[GetIndexOfClosestCentroid (pointPosition.point, centroids)].Add (pointPosition);
+                });
+                
+                for (int i = 0; i < kVal; i++)
                 {
-                    tempClusteredPoints[GetIndexOfClosestCentroid (pointPosition.point, centroids)].Add (pointPosition);
+                    clusteredPoints[i] = concurrentClusteredPoints[i].ToList ();
                 }
-
-                clusteredPoints = tempClusteredPoints;
             }
             catch (Exception e)
             {
@@ -50,26 +54,26 @@ namespace RoboticEyes.Rex.RexFileReader.Examples
             }
         }
 
-        private static List<List<ColoredPoint>> InitializeClusterPointsList (int kVal)
+        private static ConcurrentBag<ColoredPoint>[] InitializeConcurrentClusterPointsList (int kVal)
         {
-            var clusteredPoints = new List<List<ColoredPoint>> ();
+            var concurrentClusteredPoints = new ConcurrentBag<ColoredPoint>[kVal];
 
             for (int i = 0; i < kVal; i++)
             {
-                clusteredPoints.Add (new List<ColoredPoint> ());
+                concurrentClusteredPoints[i] = new ConcurrentBag<ColoredPoint> ();
             }
 
-            return clusteredPoints;
+            return concurrentClusteredPoints;
         }
 
-        private static int GetIndexOfClosestCentroid (Vector3 pointPosition, List<Vector3> centroids)
+        private static int GetIndexOfClosestCentroid (Vector3 pointPosition, Vector3[] centroids)
         {
             var minDist = float.PositiveInfinity;
             var minIdx = 0;
 
-            for (int i = 0; i < centroids.Count; i++)
+            for (int i = 0; i < centroids.Length; i++)
             {
-                var dist = Vector3.Distance (pointPosition, centroids[i]);
+                var dist = (centroids[i] - pointPosition).sqrMagnitude;
 
                 if (dist < minDist)
                 {
@@ -84,7 +88,7 @@ namespace RoboticEyes.Rex.RexFileReader.Examples
         public struct ColoredPoint
         {
             public Vector3 point;
-            public Color color;
+            public Color32 color;
         }
     }
 }

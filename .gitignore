@@ -25,6 +25,7 @@
 # Jetbrains Rider Cache
 .idea/
 Assets/Plugins/Editor/JetBrains*
+.editorconfig
 
 # Gradle cache directory
 .gradle/

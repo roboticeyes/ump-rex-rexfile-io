@@ -12,18 +12,19 @@ using UnityEngine;
 
 public class FreeFloatEditorCamera : MonoBehaviour
 {
-    [SerializeField] private float movementSpeed = 2f;
-
-    [SerializeField] private Camera playerCamera;
-
-    [SerializeField] private bool lockYMovement = true;
+    [SerializeField] 
+    private float movementSpeed = 2f;
+    [SerializeField] 
+    private Camera playerCamera;
+    [SerializeField] 
+    private bool lockYMovement = true;
 
     private void Awake()
     {
 #if !UNITY_EDITOR
         Destroy (this);
 #else
-        playerCamera.transform.position = new Vector3 (0f, 1f, 0f);
+        // playerCamera.transform.position = new Vector3 (0f, 1f, 0f);
 #endif
     }
 
@@ -42,8 +43,7 @@ public class FreeFloatEditorCamera : MonoBehaviour
         var mouseX = Input.GetAxis ("Mouse X");
         var mouseY = -1f * Input.GetAxis ("Mouse Y");
 
-        playerCamera.transform.eulerAngles += new Vector3 (mouseY, mouseX, 0f);
-        playerCamera.transform.eulerAngles += new Vector3 (0f, mouseX, 0f);
+        playerCamera.transform.eulerAngles += new Vector3 (mouseY, mouseX * 2, 0f);
 
         var movement = playerCamera.transform.forward * Input.GetAxis ("Vertical") + playerCamera.transform.right * Input.GetAxis ("Horizontal");
 
@@ -53,7 +53,7 @@ public class FreeFloatEditorCamera : MonoBehaviour
         }
 
         movement.Normalize ();
-        movement *= movementSpeed * Time.deltaTime;
+        movement *= movementSpeed * Time.deltaTime * 3f;
 
         playerCamera.transform.position += movement;
     }
