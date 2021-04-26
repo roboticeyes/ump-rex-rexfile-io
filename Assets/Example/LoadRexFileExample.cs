@@ -42,7 +42,10 @@ public class LoadRexFileExample : MonoBehaviour
 
         foreach (var rexFileName in rexFileNames)
         {
-            if (string.IsNullOrEmpty (rexFileName)) continue;
+            if(string.IsNullOrEmpty (rexFileName))
+            {
+                continue;
+            }
 
             var dataPath = Path.Combine (Application.streamingAssetsPath, rexFileName);
 

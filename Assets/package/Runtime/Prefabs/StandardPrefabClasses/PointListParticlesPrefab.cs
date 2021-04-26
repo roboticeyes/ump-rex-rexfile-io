@@ -116,7 +116,7 @@ namespace RoboticEyes.Rex.RexFileReader.Examples
             {
                 float reducedCount = Mathf.CeilToInt (particles.Length * densityFactor);
                 var particleSubset = new ParticleSystem.Particle[(int)reducedCount];
-                var dynamicParticleSize = Vector3.one * Mathf.Max((1 - densityFactor) * 0.1f, particleSize);
+                var dynamicParticleSize = Vector3.one * Mathf.Max ((1 - densityFactor) * 0.1f, particleSize);
                 
                 Parallel.For (0, (int)reducedCount, i =>
                 {
