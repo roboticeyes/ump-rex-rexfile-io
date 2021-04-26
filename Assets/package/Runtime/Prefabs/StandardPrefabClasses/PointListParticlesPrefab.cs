@@ -22,9 +22,12 @@ namespace RoboticEyes.Rex.RexFileReader.Examples
         private float particleSize = 0.1f;
         [SerializeField] 
         private ParticleSystem particlesSystem;
+        
         private ParticleSystem.Particle[] particles;
+        private float minDeltaForDensityUpdate = 0.05f;
         private float currentDensityFactor = 0;
         private Renderer objRenderer;
+        private Renderer particleRenderer;
 
         //only useful if this prefab is used without clustering prefab, which it shouldn't be
         public override bool SetPoints (List<Vector3> pointPositions, List<Color> pointColors)
@@ -68,17 +71,12 @@ namespace RoboticEyes.Rex.RexFileReader.Examples
             }
             
             objRenderer = GetComponent<Renderer> ();
+            particleRenderer = particlesSystem.GetComponent<Renderer> ();
         }
 
         public override void SetRendererEnabled (bool enabled)
         {
-            gameObject.SetActive (enabled);
-
-            if (enabled)
-            {
-                //necessary for particles to become visible
-                particlesSystem.SetParticles (particles);
-            }
+            particleRenderer.enabled = enabled;
         }
 
         public override void SetLayer (int layer)
@@ -96,13 +94,21 @@ namespace RoboticEyes.Rex.RexFileReader.Examples
             return objRenderer.isVisible;
         }
 
-        public void SetDensity(float densityFactor)
+        public void SetMinDeltaForDensityUpdate (float minDelta)
+        {
+            minDeltaForDensityUpdate = minDelta;
+        }
+        
+        public void SetDensity (float densityFactor)
         {
             //prevent irrelevant updates
-            if(Mathf.Abs(densityFactor - currentDensityFactor) < 0.05f) return;
+            if (Mathf.Abs (densityFactor - currentDensityFactor) < minDeltaForDensityUpdate)
+            {
+                return;
+            }
 
             //skip reduction if there isn't any
-            if (Mathf.Approximately(densityFactor, 1f))
+            if (Mathf.Approximately (densityFactor, 1f))
             {
                 particlesSystem.SetParticles (particles);
             }

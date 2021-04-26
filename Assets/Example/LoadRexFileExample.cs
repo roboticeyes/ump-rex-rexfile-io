@@ -21,18 +21,16 @@ public class LoadRexFileExample : MonoBehaviour
     [SerializeField]
     [Tooltip ("File must be inside the `StreamingAssets` Folder. Filename must include `.rex` ending.")]
     private List<string> rexFileNames;
+    [SerializeField]
+    private MeshFilter[] meshesToWrite;
 
-    [SerializeField] private MeshFilter[] meshesToWrite;
-
-    float startTime = 0f;
     List<byte[]> data;
-
     private LoadedObjects loaded;
-
     private List<GameObject> parentObjects;
 
     bool load = true;
     int loadedTimes = 0;
+    float startTime = 0f;
 
     private void Start()
     {
@@ -42,24 +40,30 @@ public class LoadRexFileExample : MonoBehaviour
         data = new List<byte[]> ();
         parentObjects = new List<GameObject> ();
 
-        foreach (var rexFileName in rexFileNames) {
+        foreach (var rexFileName in rexFileNames)
+        {
             if (string.IsNullOrEmpty (rexFileName)) continue;
 
             var dataPath = Path.Combine (Application.streamingAssetsPath, rexFileName);
 
-            if (Application.platform==RuntimePlatform.Android) {
+            if (Application.platform == RuntimePlatform.Android)
+            {
                 var uwr = UnityWebRequest.Get (dataPath);
                 uwr.SendWebRequest ();
                 while (!uwr.isDone) { }
                 data.Add (uwr.downloadHandler.data);
             } 
-            else 
+            else
             {
                 data.Add (File.ReadAllBytes (dataPath));
             }
         }
 
-        if (meshesToWrite!=null && meshesToWrite.Length > 0) {
+#if !UNITY_EDITOR
+        return;
+#endif
+        if (meshesToWrite != null && meshesToWrite.Length > 0)
+        {
             File.WriteAllBytes ("out.rex", RexConverter.Instance.GenerateRexFile (meshesToWrite));
             Debug.Log ("Writing done.");
         }
@@ -67,17 +71,21 @@ public class LoadRexFileExample : MonoBehaviour
 
     private void Update()
     {
-        if (Input.GetKeyDown (KeyCode.Space)) {
+        if (Input.GetKeyDown (KeyCode.Space))
+        {
             loadedTimes = 0;
         }
 
-        if (data!=null && load && loadedTimes < 1) {
+        if (data != null && load && loadedTimes < 1)
+        {
             load = false;
-            if (loaded!=null) {
+            if (loaded != null)
+            {
                 loaded.DestroyLoadedObjects ();
                 loaded = null;
 
-                foreach (var parentObject in parentObjects) {
+                foreach (var parentObject in parentObjects)
+                {
                     Destroy (parentObject);
                 }
 
@@ -85,10 +93,12 @@ public class LoadRexFileExample : MonoBehaviour
             }
 
             startTime = Time.realtimeSinceStartup;
-            foreach (var item in data) {
+            foreach (var item in data)
+            {
                 RexConverter.Instance.ConvertFromRex (item, (success, loadedObjects) =>
                 {
-                    if (!success) {
+                    if (!success)
+                    {
                         Debug.Log ("ConvertFromRex failed.");
                         return;
                     }
@@ -100,12 +110,14 @@ public class LoadRexFileExample : MonoBehaviour
 
                     var parentObjectsIdx = parentObjects.Count - 1;
 
-                    foreach (var meshObject in loadedObjects.Meshes) {
+                    foreach (var meshObject in loadedObjects.Meshes)
+                    {
                         meshObject.gameObject.SetActive (true);
                         meshObject.gameObject.transform.SetParent (parentObjects[parentObjectsIdx].transform);
                     }
 
-                    foreach (var pointListObject in loadedObjects.PointSets) {
+                    foreach (var pointListObject in loadedObjects.PointSets)
+                    {
                         pointListObject.gameObject.transform.SetParent (parentObjects[parentObjectsIdx].transform);
                     }
 

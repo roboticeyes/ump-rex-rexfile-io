@@ -23,9 +23,8 @@ public class FreeFloatEditorCamera : MonoBehaviour
     {
 #if !UNITY_EDITOR
         Destroy (this);
-#else
-        // playerCamera.transform.position = new Vector3 (0f, 1f, 0f);
 #endif
+        // playerCamera.transform.position = new Vector3 (0f, 1f, 0f);
     }
 
     void Update()

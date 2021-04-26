@@ -19,10 +19,15 @@ namespace RoboticEyes.Rex.RexFileReader.Examples
 {
     public class ThreadedClustering : ThreadedWorker
     {
+        public struct ColoredPoint
+        {
+            public Vector3 point;
+            public Color32 color;
+        }
+        
         private readonly IEnumerable<ColoredPoint> pointPositions;
         private readonly int kVal;
         private readonly Vector3[] centroids;
-        
         public List<ColoredPoint>[] clusteredPoints;
 
         public ThreadedClustering (IEnumerable<ColoredPoint> pointPositions, Vector3[] centroids, int kVal)
@@ -34,11 +39,13 @@ namespace RoboticEyes.Rex.RexFileReader.Examples
 
         public override void WorkerFunction()
         {
-            try {
+            try 
+            {
                 clusteredPoints = new List<ColoredPoint>[kVal];
                 var concurrentClusteredPoints = InitializeConcurrentClusterPointsList (kVal);
 
-                Parallel.ForEach (pointPositions, pointPosition => {
+                Parallel.ForEach (pointPositions, pointPosition =>
+                {
                     concurrentClusteredPoints[GetIndexOfClosestCentroid (pointPosition.point, centroids)].Add (pointPosition);
                 });
                 
@@ -83,12 +90,6 @@ namespace RoboticEyes.Rex.RexFileReader.Examples
             }
 
             return minIdx;
-        }
-
-        public struct ColoredPoint
-        {
-            public Vector3 point;
-            public Color32 color;
         }
     }
 }

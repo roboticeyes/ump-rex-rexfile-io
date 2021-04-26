@@ -43,8 +43,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b63e1d30863ec34408566bd9eb36a95d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  dynamicCloudDensityEnabled: 0
+  dynamicParticleDensityEnabled: 1
+  minDeltaForDensityUpdate: 0.05
   maxAllowedParticlesOnScreen: 1000000
   averageParticlesPerCluster: 60000
-  pointListParticlesPrefab: {fileID: 1961058510537850, guid: 3e7021d9e37b7ec418802fca5a6b8d97,
+  pointListParticlesPrefab: {fileID: -5712127388886257658, guid: 3e7021d9e37b7ec418802fca5a6b8d97,
     type: 3}
