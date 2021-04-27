@@ -6,6 +6,6 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/RexPackages/rex-unity-cmp-rexloader/Example/LoadRexFileExample.unity
+    path: Assets/Example/LoadRexFileExample.unity
     guid: aa30bd16171c78640818de36e783b131
   m_configObjects: {}
