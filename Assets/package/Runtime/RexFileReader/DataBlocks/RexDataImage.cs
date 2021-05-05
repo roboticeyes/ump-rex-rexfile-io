@@ -9,6 +9,8 @@
  */
 
 using System;
+using System.Collections.Generic;
+using UnityEngine;
 
 namespace RoboticEyes.Rex.RexFileReader
 {
@@ -23,6 +25,13 @@ namespace RoboticEyes.Rex.RexFileReader
         public ImageCompression compression;
         public byte[] data;
 
+        public RexDataImage (Texture2D tex)
+        {
+            type = RexDataBlockType.Image;
+            data = ImageConversion.EncodeToPNG (tex);
+            compression = ImageCompression.PNG;
+        }
+
         public RexDataImage (byte[] buffer, int offset) : base (buffer, ref offset)
         {
             compression = (ImageCompression) BitConverter.ToInt32 (buffer, offset);
@@ -32,9 +41,12 @@ namespace RoboticEyes.Rex.RexFileReader
             Buffer.BlockCopy (buffer, offset, data, 0, (int) blockSize - SizeCompression);
         }
 
-        protected override byte[] GetBlockBytes ()
+        protected override byte[] GetBlockBytes()
         {
-            throw new NotImplementedException ();
+            List<byte> blockData = new List<byte>();
+            blockData.AddRange (BitConverter.GetBytes ((int)compression));
+            blockData.AddRange (data);
+            return blockData.ToArray();
         }
     }
 }
