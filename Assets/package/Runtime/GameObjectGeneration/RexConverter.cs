@@ -64,7 +64,7 @@ namespace RoboticEyes.Rex.RexFileReader
 
             foreach (var mf in meshFilters)
             {
-                meshes.Add (new KeyValuePair<Mesh, Material> (mf.sharedMesh, null));
+                meshes.Add (new KeyValuePair<Mesh, Material> (mf.sharedMesh, mf.GetComponent<MeshRenderer>().sharedMaterial));
             }
 
             return GenerateRexFile (meshes);
@@ -77,6 +77,7 @@ namespace RoboticEyes.Rex.RexFileReader
             List<RexDataBlock> rexDataBlocks = new List<RexDataBlock> ();
 
             Dictionary<Material, RexDataMaterialStandard> materialDataBlocks = new Dictionary<Material, RexDataMaterialStandard> ();
+            Dictionary<Texture, RexDataImage> textureDataBlocks = new Dictionary<Texture, RexDataImage>();
 
             bool hasDefaultMaterial = false;
             RexDataMaterialStandard defaultMaterialBlock = new RexDataMaterialStandard (new Color (1f, 1f, 1f), 1f);
@@ -96,6 +97,17 @@ namespace RoboticEyes.Rex.RexFileReader
                 {
                     RexDataMaterialStandard materialBlock = new RexDataMaterialStandard (material);
                     materialId = materialBlock.dataId;
+                    var texture = material.mainTexture;
+                    if (texture != null)
+                    {
+                        if (!textureDataBlocks.ContainsKey (texture))
+                        {
+                            textureDataBlocks[texture] = new RexDataImage ((Texture2D)texture);
+                            rexDataBlocks.Add (textureDataBlocks[texture]);
+                        }
+
+                        materialBlock.kdTextureId = textureDataBlocks[texture].dataId;
+                    }
                     rexDataBlocks.Add (materialBlock);
                 }
 
@@ -117,7 +129,7 @@ namespace RoboticEyes.Rex.RexFileReader
 
             RexFileData rexFileData = new RexFileData (rexDataBlocks);
 
-            return rexFileData.GetBytes ();
+            return rexFileData.GetBytes();
         }
 
         public void ConvertFromRex (byte[] rexData, ConversionResultDelegate onConversionResult)
